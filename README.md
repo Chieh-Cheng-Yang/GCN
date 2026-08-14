@@ -1,73 +1,107 @@
-# Graph Convolutional Network (GCN) RTL Design
+# GCN Hardware Accelerator
 
-This project implements a hardware-oriented Graph Convolutional Network (GCN) accelerator in SystemVerilog.
+This project implements a hardware accelerator for a Graph Convolutional Network (GCN) in Verilog/SystemVerilog.
 
-The design focuses on processing graph-structured data using a sparse COO-based representation along with feature and weight memory access. The overall architecture combines transformation, combination, and selection stages to compute the final output addresses for each feature row.
+The accelerator performs feature transformation, sparse graph aggregation, and final node classification using a modular RTL architecture. Sparse graph connectivity is represented using Coordinate (COO) format to avoid unnecessary computation on zero-valued adjacency matrix entries.
 
-The project is structured as a complete RTL design and simulation workflow, making it suitable for digital hardware design learning, verification, and portfolio presentation.
-
----
-
-## Project Description
-
-This GCN design consists of several hardware modules working together to perform the computation pipeline:
-
-- `Transformation_Block`: reads feature and weight data and prepares row-wise intermediate values.
-- `Combination_Block`: combines transformed values with COO-based adjacency information.
-- `Argmax`: selects the maximum result for each node and produces the final output address.
-- `GCN`: top-level module integrating the full pipeline.
-
-The design follows a hardware dataflow model where sparse graph information and dense feature/weight data are processed through multiple computational stages before the final graph-level decision is made.
+The design was developed as part of an ASIC implementation flow targeting synthesis and physical design.
 
 ---
 
-## Main Components
+## Architecture
 
-### Top-Level Module
+The accelerator is organized into three main processing stages:
 
-```text
-Starter RTL Code/GCN.sv
-```
+1. **Feature Transformation**
+   - Loads feature and weight data into local scratchpad storage
+   - Performs vector multiplication between feature and weight values
+   - Accumulates partial products to generate transformed feature vectors
+   - Uses an FSM and counters to coordinate memory access and computation
 
-The top-level GCN module connects the main processing units and manages the data path between memory access, transformation, combination, and output selection.
+2. **Sparse Feature Aggregation**
+   - Uses COO-formatted graph connectivity to identify connected nodes
+   - Reads transformed feature rows based on source and destination node indices
+   - Accumulates neighboring feature vectors without performing a dense adjacency-matrix multiplication
+   - Stores the aggregated feature matrix for classification
 
-### Transformation Stage
+3. **Argmax Classification**
+   - Reads the final aggregated feature vectors
+   - Compares output values for each node
+   - Returns the index of the maximum value as the predicted class
 
-```text
-Starter RTL Code/Transformation_Block.sv
-Starter RTL Code/Transformation_FSM.sv
-```
+### System Diagram
 
-This stage handles the memory read requests and prepares intermediate data for the next processing step.
+![GCN Architecture](GCN.png)
 
-### Combination Stage
+---
 
-```text
-Starter RTL Code/Combination_Block.sv
-Starter RTL Code/Mult_ADJ.sv
-Starter RTL Code/Vector_Multiplier.sv
-```
+## RTL Modules
 
-This stage processes adjacency information and combines it with intermediate matrix results, producing values used for the final decision.
+### Top-Level
+`GCN.sv`
 
-### Output Selection
+Integrates the transformation, sparse aggregation, and classification stages and manages the overall data flow of the accelerator.
 
-```text
-Starter RTL Code/Argmax.sv
-```
+### Transformation
+`Transformation_Block.sv`
 
-The argmax block determines the final selected address for each row by comparing the computed candidate values and selecting the maximum result.
+Controls feature transformation and integrates:
 
-### Memory and Storage Modules
+- `Transformation_FSM.sv`
+- `Scratch_Pad_feature.sv`
+- `Scratch_Pad_weight.sv`
+- `Vector_Multiplier.sv`
+- `Accumulator.v`
+- `Feature_Counter.v`
+- `Weight_Counter.v`
+- `Matrix_FM_WM_Memory.sv`
 
-```text
-Starter RTL Code/Matrix_FM_WM_Memory.sv
-Starter RTL Code/Matrix_FM_WM_ADJ_Memory.sv
-Starter RTL Code/Scratch_Pad_feature.sv
-Starter RTL Code/Scratch_Pad_weight.sv
-```
+The transformation stage computes feature-weight products and stores the transformed feature matrix for subsequent graph aggregation.
 
-These modules handle the storage and retrieval of feature, weight, and adjacency data used during the computation.
+### Sparse Aggregation
+`Combination_Block.sv`
+
+Performs graph aggregation using the sparse COO representation of the adjacency matrix.
+
+Supporting modules include:
+
+- `Mult_ADJ.sv`
+- `Matrix_FM_WM_ADJ_Memory.sv`
+- `FM_WM_ROW_Counter.sv`
+
+Instead of performing a dense adjacency-matrix multiplication, the aggregation stage processes only graph connections represented in the COO input.
+
+### Classification
+`Argmax.sv`
+
+Performs the final classification by selecting the maximum output value for each node and returning its corresponding class index.
+
+---
+
+## Design Highlights
+
+- Modular RTL implementation in Verilog/SystemVerilog
+- Hardware acceleration of GCN inference
+- Sparse graph processing using COO-formatted adjacency data
+- Local feature and weight scratchpad memories
+- Parallel vector multiplication
+- Accumulation of partial dot products
+- FSM-based computation and memory control
+- Dedicated transformation and aggregation datapaths
+- Hardware argmax classification
+- Designed for ASIC synthesis and physical implementation
+
+---
+
+## Simulation Results
+
+The plots below show representative waveforms and intermediate results from the RTL verification process.
+
+![Transformation Stage 1](results/Transformation_1.png)
+
+![Transformation Stage 2](results/Transformation_2.png)
+
+![Combination and Argmax Result](results/Combination_Argmax.png)
 
 ---
 
@@ -80,15 +114,14 @@ GCN/
 │   ├── feature_data.txt
 │   ├── gold_address.txt
 │   └── weight_data.txt
-├── Starter RTL Code/
+│
+├── RTL/
 │   ├── Accumulator.v
 │   ├── Argmax.sv
 │   ├── Combination_Block.sv
 │   ├── Feature_Counter.v
 │   ├── FM_WM_ROW_Counter.sv
 │   ├── GCN.sv
-│   ├── GCN_TB.sv
-│   ├── GCN_TB_post_syn_apr.sv
 │   ├── Matrix_FM_WM_ADJ_Memory.sv
 │   ├── Matrix_FM_WM_Memory.sv
 │   ├── Mult_ADJ.sv
@@ -96,94 +129,71 @@ GCN/
 │   ├── Scratch_Pad_weight.sv
 │   ├── Transformation_Block.sv
 │   ├── Transformation_FSM.sv
-│   └── Vector_Multiplier.sv
-├── Lab4.pdf
+│   ├── Vector_Multiplier.sv
+│   └── Weight_Counter.v
+│
+├── results/
+│   ├── Transformation_1.png
+│   ├── Transformation_2.png
+│   └── Combination_Argmax.png
+│
+├── GCN.png
 ├── README.md
 ├── .gitignore
+├── Lab4.pdf
 └── Data/
 ```
 
 ---
 
-## Data Inputs
+## Dataset
 
-The `Data/` folder contains the input files used by the simulation environment:
+The accelerator operates on three primary inputs:
 
-- `feature_data.txt`: feature matrix data
-- `weight_data.txt`: weight matrix data
-- `coo_data.txt`: COO-based graph representation
-- `gold_address.txt`: expected output addresses used to verify correctness
+- **Feature Matrix** — node feature vectors
+- **Weight Matrix** — learned transformation weights
+- **COO Graph Representation** — sparse source/destination node pairs representing graph connectivity
 
-These files are loaded by the testbench via `$readmemb` to simulate the GCN hardware pipeline.
+The expected classification results are provided through the golden output data and are used for functional verification.
 
 ---
 
 ## Verification
 
-The verification flow is implemented in the testbench:
+The RTL design is verified by comparing the accelerator's classification output against the expected node classifications.
+
+The verification flow checks:
+
+- Feature and weight data loading
+- Feature transformation
+- COO-based sparse aggregation
+- Intermediate memory operations
+- Final argmax classification
+- Overall GCN output correctness
+
+---
+
+## ASIC Design Flow
+
+The design is intended for a complete RTL-to-GDSII implementation flow consisting of:
 
 ```text
-Starter RTL Code/GCN_TB.sv
+RTL Design
+    ↓
+Functional Simulation
+    ↓
+Logic Synthesis
+    ↓
+Post-Synthesis Verification
+    ↓
+Placement & Routing
+    ↓
+Post-Layout Verification
+    ↓
+Power / Performance Analysis
 ```
 
-The testbench performs the following actions:
-
-- Loads the feature, weight, COO, and golden output files
-- Generates the clock and reset signals
-- Starts the DUT execution
-- Waits for the `done` signal
-- Compares the design outputs against the golden reference values
-- Displays the DUT result and expected result for each node
-
-The verification logic checks whether each computed output address matches the expected golden address and raises an error if a mismatch is found.
-
----
-
-## Simulation Flow
-
-This project is designed for RTL simulation using a SystemVerilog testbench.
-
-### Example simulation command
-
-From the project directory:
-
-```bash
-cd "Starter RTL Code"
-vsim -c work.GCN_TB -do "run -all; quit -f"
-```
-
-Or compile manually:
-
-```bash
-cd "Starter RTL Code"
-vlog *.sv
-vsim -c work.GCN_TB -do "run -all; quit -f"
-```
-
-The result should show whether the hardware output matches the expected golden addresses for all rows.
-
----
-
-## Design Highlights
-
-- Hardware implementation of a GCN-inspired dataflow
-- Sparse graph processing using COO style adjacency representation
-- Memory-based feature and weight access
-- Intermediate transformation and combination stages
-- Final argmax-based output decision
-- Functional validation through a golden-reference testbench
-
----
-
-## Future Improvements
-
-Potential extensions for this project include:
-
-- adding more instruction/graph operation support
-- improving modularity and scalability
-- integrating synthesis-friendly pipeline optimizations
-- adding waveform visualization and performance analysis
-- extending the design into a larger accelerator architecture
+The accelerator was designed with performance and power considerations, including datapath parallelism, sparse graph processing, and controlled data movement.
 
 ---
 
