@@ -116,10 +116,10 @@ GCN/
 │   └── weight_data.txt
 │
 ├── RTL/
-│   ├── Accumulator.v
+│   ├── Accumulator.sv
 │   ├── Argmax.sv
 │   ├── Combination_Block.sv
-│   ├── Feature_Counter.v
+│   ├── Feature_Counter.sv
 │   ├── FM_WM_ROW_Counter.sv
 │   ├── GCN.sv
 │   ├── Matrix_FM_WM_ADJ_Memory.sv
@@ -130,7 +130,7 @@ GCN/
 │   ├── Transformation_Block.sv
 │   ├── Transformation_FSM.sv
 │   ├── Vector_Multiplier.sv
-│   └── Weight_Counter.v
+│   └── Weight_Counter.sv
 │
 ├── results/
 │   ├── Transformation_1.png
