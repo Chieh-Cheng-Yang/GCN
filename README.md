@@ -195,6 +195,3 @@ The accelerator was designed with performance and power considerations, includin
 
 ---
 
-## Author
-
-Chieh-Cheng Yang
