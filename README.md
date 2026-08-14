@@ -33,6 +33,14 @@ The accelerator is organized into three main processing stages:
 
 ![GCN Architecture](GCN.png)
 
+### Sparse Matrix Acceleration
+
+The adjacency matrix is binary and highly sparse, so performing a conventional dense matrix multiplication would spend most operations processing zero-valued entries. To exploit this sparsity, the accelerator represents graph connectivity in Coordinate (COO) format and processes only the non-zero edges.
+
+For each COO entry, the hardware uses the source and destination node indices to read the corresponding transformed feature row and accumulate it directly into the destination row. Because adjacency values are binary, aggregation does not require general-purpose multiplication: an existing edge contributes the source feature vector, while absent edges are skipped entirely.
+
+This sparse dataflow replaces dense adjacency-matrix multiplication with indexed feature-vector accumulation, avoiding computation on zero entries and reducing unnecessary arithmetic operations.
+
 ---
 
 ## RTL Modules
