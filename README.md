@@ -140,8 +140,6 @@ GCN/
 ├── GCN.png
 ├── README.md
 ├── .gitignore
-├── Lab4.pdf
-└── Data/
 ```
 
 ---
@@ -197,12 +195,6 @@ The accelerator was designed with performance and power considerations, includin
 
 ---
 
-## License
-
-This project is intended for educational and portfolio use.
-
----
-
 ## Author
 
-Your Name
+Chieh-Cheng Yang
