@@ -1,9 +1,12 @@
-# Simulation artifacts
+# Simulation / testbench artifacts
 *.log
 *.vcd
 *.wlf
 *.svf
 *.sdb
+*.ucdb
+*.fst
+*.dump
 transcript
 vsim.wlf
 modelsim.ini
@@ -11,6 +14,12 @@ modelsim.ini
 # Tool-generated folders
 work/
 obj_dir/
+__pycache__/
+
+# Build / synthesis outputs
+*.bak
+*.orig
+*.rej
 
 # OS files
 .DS_Store
@@ -18,3 +27,8 @@ Thumbs.db
 
 # IDE files
 .vscode/
+
+# Keep RTL source files tracked
+!Starter RTL Code/*.sv
+!Starter RTL Code/*.v
+!Data/*.txt
